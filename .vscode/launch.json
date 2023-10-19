@@ -1,0 +1,60 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "depth2img",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/lez/StereoDiffusion/depth2stereoimg.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "args": [
+                "--ckpt", "/home/lez/m2b/models/512-depth-ema.ckpt",
+                "--depthmodel_path","/home/lez/m2b/code/DPT/weights/dpt_hybrid-midas-501f0c75.pt",
+                "--n_samples","2",
+                "--prompt","A young woman wearing with VR set, high definition, photo.",
+                "--direction","uni"
+            ]
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "txt2img_v2.1",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/lez/StereoDiffusion/txt2stereoimg.py",
+            "justMyCode": false,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "args": [
+                "--ckpt", "/home/lez/m2b/models/v2-1_768-ema-pruned.ckpt",
+                "--depthmodel_path","/home/lez/m2b/code/DPT/weights/dpt_hybrid-midas-501f0c75.pt",
+                // "--config","/home/lez/m2b/code/mysd_v2/configs/stable-diffusion/v2-inference-v.yaml",
+                // "--ddim_eta","0.0",
+                // "--steps","50",
+                "--n_samples","2",
+                // "--fixed_code",
+                // "--source_img","/home/lez/m2b/code/mysd_v2/output/seed_49/ori.png",
+                "--prompt",
+                // "A cat is walking on the street, front view, high definition",
+                " cozy living room bathed in warm, soft light. high definition, photo.",
+                // "A laptop on the table, room view, high definition,front view,hotorealistic."
+                // "A photo of cat in the park, front view, high definition",
+                // "a young woman with a contagious smile and a penchant for adventure.front view, high definition She has curly auburn hair that cascades down her back, and her eyes sparkle with curiosity. She is often seen wearing a worn leather jacket and a necklace adorned with a small compass",
+            ]
+        },
+    ]
+}
