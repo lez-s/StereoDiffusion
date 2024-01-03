@@ -9,21 +9,16 @@ from PIL import Image
 from tqdm import tqdm, trange
 from itertools import islice
 from einops import rearrange, repeat
-from torchvision.utils import make_grid
-from torch import autocast
-from contextlib import nullcontext
 from pytorch_lightning import seed_everything
-from imwatermark import WatermarkEncoder
-from stereoutils import *
 import torchvision.utils as vutils
 import sys
 
 sys.path.append('./stablediffusion')
 sys.path.append('./DPT')
-from ldm.util import instantiate_from_config
-from dpt.models import DPTDepthModel
-from ldm.data.util import AddMiDaS
-
+from stablediffusion.ldm.util import instantiate_from_config
+from DPT.dpt.models import DPTDepthModel
+from stablediffusion.ldm.data.util import AddMiDaS
+from stereoutils import *
 torch.set_grad_enabled(False)
 
 def chunk(it, size):
@@ -54,7 +49,9 @@ def load_model_from_config(config, ckpt, verbose=False):
 def load_img(path):
     image = Image.open(path).convert("RGB")
     w, h = image.size
+
     print(f"loaded input image of size ({w}, {h}) from {path}")
+    image = image.resize((512, 512))
     return image
 
 def make_batch_sd(
@@ -104,7 +101,7 @@ def parse_args():
         type=str,
         nargs="?",
         help="dir to write results to",
-        default="outputs/img2stereoimg-samples"
+        default="outputs/depth2stereoimg-samples"
     )
 
     parser.add_argument(
@@ -170,7 +167,7 @@ def parse_args():
     parser.add_argument(
         "--strength",
         type=float,
-        default=0.8,
+        default=1,
         help="strength for noising/unnoising. 1.0 corresponds to full destruction of information in init image",
     )
 
@@ -203,21 +200,25 @@ def parse_args():
         default="uni"
     )
     parser.add_argument(
-        "--stereo_balance",
-        type=int,
-        choices=[-1,0],
-        default=0
-    )
-    parser.add_argument(
-        "--no_full_sample",
+        "--deblur",
         action='store_true',
         default=False,
     )
+    parser.add_argument(
+        "--shift_both",
+        action='store_true',
+        default=False,
+    )
+    # parser.add_argument(
+    #     "--no_full_sample",
+    #     action='store_true',
+    #     default=False,
+    # )
     parser.add_argument("--depthmodel_path",type=str,required=True,help='path of depth model')
     return parser.parse_args()
 
 def main(opt):
-    do_full_sample = False if opt.no_full_sample else True
+    # do_full_sample = False if opt.no_full_sample else True
     
     seed_everything(opt.seed)
 
@@ -287,18 +288,19 @@ def main(opt):
             uc_cross = torch.cat([uc_cross, uc_cross], dim=0)
             uc_full = {"c_concat": [c_cat], "c_crossattn": [uc_cross]}
 
-            if not do_full_sample:
-            # encode (scaled latent)
-                z_enc = sampler.stochastic_encode(
-                    z, torch.tensor([t_enc] * opt.n_samples).to(model.device))
-            else:
-                z_enc = torch.randn_like(z)
+            # if not do_full_sample:
+            # # encode (scaled latent)
+            #     z_enc = sampler.stochastic_encode(
+            #         z, torch.tensor([t_enc] * opt.n_samples).to(model.device))
+            # else:
+            z_enc = torch.randn_like(z)
             
             z_enc = torch.cat([z_enc, z_enc], dim=0)
             # decode it
             samples = sampler.decode(z_enc, cond, t_enc, unconditional_guidance_scale=opt.scale,
                                         unconditional_conditioning=uc_full, 
-                                        disparity=cc.squeeze(1),swapat=sa,stereo_balance=opt.stereo_balance)
+                                        disparity=cc.squeeze(1),swapat=sa,shift_both=opt.shift_both,
+                                        deblur=opt.deblur)
 
             x_samples = model.decode_first_stage(samples)
             x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)

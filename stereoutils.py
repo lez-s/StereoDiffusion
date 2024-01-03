@@ -6,13 +6,13 @@ import torch.nn.functional as F
 import numpy as np
 
 from einops import rearrange,repeat
-
+import gc
 from torchvision.utils import save_image
 import sys
 sys.path.append('./stablediffusion')
-from ldm.models.diffusion.ddim import DDIMSampler
+from stablediffusion.ldm.models.diffusion.ddim import DDIMSampler
 
-def stereo_shift_torch(input_images, depthmaps,divergence=10,stereo_balance=0.0,stereo_offset_exponent=1.0):
+def stereo_shift_torch(input_images, depthmaps,sacle_factor=8,shift_both = False,stereo_offset_exponent=1.0):
     '''input: [B, C, H, W] depthmap: [B, H, W]'''
 
     def _norm_depth(depth,max_val=1):
@@ -24,29 +24,31 @@ def stereo_shift_torch(input_images, depthmaps,divergence=10,stereo_balance=0.0,
             out = np.zeros(depth.shape, dtype=depth.dtype)
         return out
     
-    def _create_stereo(input_images,depthmaps,divergence,stereo_offset_exponent):
+    def _create_stereo(input_images,depthmaps,sacle_factor,stereo_offset_exponent):
         b, c, h, w = input_images.shape
         derived_image = torch.zeros_like(input_images)
-        divergence_px = (divergence / 100.0) * input_images.shape[-1]
+        sacle_factor_px = (sacle_factor / 100.0) * input_images.shape[-1]
         # filled = torch.zeros(b * h * w, dtype=torch.uint8)
         if True:
             for batch in range(b):
                 for row in range(h):
                     # Swipe order should ensure that pixels that are closer overwrite
                     # (at their destination) pixels that are less close
-                    for col in range(w) if divergence_px < 0 else range(w - 1, -1, -1):
-                        col_d = col + int((depthmaps[batch,row,col] ** stereo_offset_exponent) * divergence_px)
+                    for col in range(w) if sacle_factor_px < 0 else range(w - 1, -1, -1):
+                        col_d = col + int((depthmaps[batch,row,col] ** stereo_offset_exponent) * sacle_factor_px)
                         if 0 <= col_d < w:
                             derived_image[batch,:,row,col_d] = input_images[batch,:,row,col]
                             # filled[batch * h * w + row * w + col_d] = 1        
         return derived_image
     depthmaps = _norm_depth(depthmaps)
-    balance = (stereo_balance + 1) / 2
-    if balance < 0.001:
+    
+    if shift_both is False:
         left = input_images
+        balance = 0
     else:
-        left = _create_stereo(input_images,depthmaps,+1 * divergence * balance,stereo_offset_exponent)
-    right = _create_stereo(input_images,depthmaps,-1 * divergence * (1 - balance),stereo_offset_exponent)
+        balance = 0.5
+        left = _create_stereo(input_images,depthmaps,+1 * sacle_factor * balance,stereo_offset_exponent)
+    right = _create_stereo(input_images,depthmaps,-1 * sacle_factor * (1 - balance),stereo_offset_exponent)
     return torch.concat([left,right],axis=0)
 
 
@@ -247,8 +249,9 @@ class StereoShiftSampler(DDIMSampler):
     def sample(self, *args, **kwargs):
         try:
             self.disparity = kwargs['disparity']
-            self.stereo_balance = kwargs['stereo_balance']
+            self.shift_both = kwargs['shift_both']
             self.swapat = kwargs['swapat']
+            self.deblur = kwargs['deblur']
             print(self.swapat)
         except:
             pass
@@ -262,19 +265,39 @@ class StereoShiftSampler(DDIMSampler):
             if self.ddimstep==self.swapat:
                 x = args[0]
                 N = x.shape[0]//2
-                disparity = torch.nn.functional.interpolate(self.disparity.unsqueeze(1),size=[64,64],mode="bicubic",align_corners=False,).squeeze(1)
-                x_prev = stereo_shift_torch(x_prev[:N],disparity,stereo_balance=self.stereo_balance)
-                pred_x0 = stereo_shift_torch(pred_x0[:N],disparity,stereo_balance=self.stereo_balance)
+                self.disparity = torch.nn.functional.interpolate(self.disparity.unsqueeze(1),size=[64,64],mode="bicubic",align_corners=False,).squeeze(1)
+                x_prev = stereo_shift_torch(x_prev[:N],self.disparity,shift_both=self.shift_both)
+                pred_x0 = stereo_shift_torch(pred_x0[:N],self.disparity,shift_both=self.shift_both)
+                # mask = x_prev[N:,0,...] != 0
+                # mask = x_prev[N:,...] != [0,0,0,0]
+                mask = torch.all(x_prev[N:,...] != 0, dim=1)
+
+                self.mask = rearrange(mask,'b h w ->b () h w').repeat(1,4,1,1)
+                if self.deblur: # aviod blurry
+                    noise = torch.randn_like(x_prev)
+                    x_prev[N:][~self.mask] = noise[N:][~self.mask]
+                    pred_x0[N:][~self.mask] = noise[N:][~self.mask]
+
+            if self.ddimstep > self.swapat and self.ddimstep % 10 ==0:
+                N = x_prev.shape[0]//2
+                x_prev_new = stereo_shift_torch(x_prev[:N],self.disparity,shift_both=self.shift_both)
+                x_prev[N:][self.mask] = x_prev_new[N:][self.mask]
+                # pred_x0_new = stereo_shift_torch(pred_x0[:N],self.disparity,shift_both=self.shift_both) 
+                # pred_x0[N:][self.mask] = pred_x0_new[N:][self.mask]
             self.ddimstep += 1
+        torch.cuda.empty_cache()
+        gc.collect()
+
         return x_prev, pred_x0
 
     @torch.no_grad()
     def decode(self,*args,**kwargs):
         try:
             self.disparity = kwargs['disparity']
-            self.stereo_balance = kwargs['stereo_balance']
+            self.shift_both = kwargs['shift_both']
             self.swapat = kwargs['swapat']
-            del kwargs['disparity'],kwargs['stereo_balance'],kwargs['swapat']
+            self.deblur = kwargs['deblur']
+            del kwargs['disparity'],kwargs['shift_both'],kwargs['swapat'],kwargs['deblur']
         except:
             pass
         return super().decode(*args, **kwargs)

@@ -2,3 +2,4 @@ __pycache__/*
 img2stereoimg.py
 midas_models/dpt_hybrid-midas-501f0c75.pt
 outputs/*
+ori_img/*
