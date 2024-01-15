@@ -1,26 +1,16 @@
 
 import argparse, os
-import PIL
 import torch
 import numpy as np
-from omegaconf import OmegaConf
 from PIL import Image
 from tqdm import tqdm, trange
-from itertools import islice
 from einops import rearrange, repeat
-from torchvision.utils import make_grid
-from torch import autocast
-from contextlib import nullcontext
-from pytorch_lightning import seed_everything
-from imwatermark import WatermarkEncoder
-import torchvision.utils as vutils
 import sys
 from typing import Optional, Union, Tuple, List
 sys.path.append('./stablediffusion')
 sys.path.append('./DPT')
 from stablediffusion.ldm.util import instantiate_from_config
 from DPT.dpt.models import DPTDepthModel
-from stablediffusion.ldm.data.util import AddMiDaS
 from stereoutils import *
 sys.path.append('./prompt-to-prompt')
 import ptp_utils 
@@ -33,7 +23,7 @@ import abc
 import seq_aligner
 import shutil
 from torch.optim.adam import Adam
-
+import torchvision
 
 scheduler = DDIMScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", clip_sample=False, set_alpha_to_one=False)
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
@@ -408,9 +398,11 @@ def run_inv_sd(image,args):
 if __name__ == "__main__":
 
     args = parse_args()
-    img = image = np.array(Image.open(args.img_path))[:, :, :3]
+    image = np.array(Image.open(args.img_path))[:, :, :3]
     h, w, c = image.shape
     img = rearrange(img,'h (b w) c ->b h w c',b=4)
     image = img[2]
     image  = load_512(image)
     out_image,image_pair = run_inv_sd(image,args)
+    torchvision.utils.save_image(image_pair, os.path.join('outputs',f'{args.img_path.split("/")[-1]}'), normalize=True)
+    # Image.fromarray(out_image).save(os.path.join('outputs',f'{name}.png'))

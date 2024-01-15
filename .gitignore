@@ -3,3 +3,4 @@ img2stereoimg.py
 midas_models/dpt_hybrid-midas-501f0c75.pt
 outputs/*
 ori_img/*
+depth2stereo.bash
