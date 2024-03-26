@@ -36,3 +36,15 @@ We use DPT depth model, so you need to download this model first. You can downlo
 # Acknowledgements
 
 This work relies on the [Stable Diffusion](https://github.com/Stability-AI/stablediffusion.git). We use the original code of [DPT](https://github.com/isl-org/DPT), and modify the code of [Stable Diffusion](https://github.com/Stability-AI/stablediffusion.git), [prompt-to-prompt](https://github.com/google/prompt-to-prompt) and [masactrl](https://github.com/TencentARC/MasaCtrl). We'd like to thank the authors for making these libraries available.
+
+# Cite us
+```
+@misc{wang2024stereodiffusion,
+      title={StereoDiffusion: Training-Free Stereo Image Generation Using Latent Diffusion Models}, 
+      author={Lezhong Wang and Jeppe Revall Frisvad and Mark Bo Jensen and Siavash Arjomand Bigdeli},
+      year={2024},
+      eprint={2403.04965},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
