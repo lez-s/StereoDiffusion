@@ -398,11 +398,7 @@ def run_inv_sd(image,args):
 if __name__ == "__main__":
 
     args = parse_args()
-    image = np.array(Image.open(args.img_path))[:, :, :3]
-    h, w, c = image.shape
-    img = rearrange(img,'h (b w) c ->b h w c',b=4)
-    image = img[2]
-    image  = load_512(image)
+    image  = load_512(args.img_path)
     out_image,image_pair = run_inv_sd(image,args)
     torchvision.utils.save_image(image_pair, os.path.join('outputs',f'{args.img_path.split("/")[-1]}'), normalize=True)
     # Image.fromarray(out_image).save(os.path.join('outputs',f'{name}.png'))
