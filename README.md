@@ -1,4 +1,4 @@
-# StereoDiffusion: Stereo Image Generation Using Latent Diffusion Models
+# StereoDiffusion: Training-Free Stereo Image Generation Using Latent Diffusion Models
 
 ![Representative](assets/Representative.jpg)
 
