@@ -193,16 +193,14 @@ def main(opt):
     batch_size = opt.n_samples if opt.source_img is None else 1
     with torch.no_grad():
         with model.ema_scope():
-            # depthmodel_path = '/home/lez/m2b/code/DPT/weights/dpt_hybrid-midas-501f0c75.pt'
+            
             net_w = net_h = 384
             depthmodel = DPTDepthModel(path=depthmodel_path,backbone="vitb_rn50_384",non_negative=True,enable_attention_hooks=False,).cuda()
             prompts = opt.prompt
             sc1 = torch.randn([opt.n_samples, opt.C, opt.H // opt.f, opt.W // opt.f], device=device)
-            # sc2 = sc1.clone()
             start_code = torch.cat([sc1, sc1], dim=0)
 
             if opt.source_img is not None: # Null-text inversion
-                # source_image_path = "/home/lez/m2b/code/mysd_v2/output/seed_49/ori.png"
                 source_image = load_image(opt.source_img, device)
                 start_code = get_zenc(source_image,seed=seed)[-1:]
                 opt.n_samples=1
