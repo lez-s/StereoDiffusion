@@ -2,7 +2,7 @@
 
 ![Representative](assets/Representative.jpg)
 
-<a href="https://arxiv.org/abs/2403.04965" style="font-size:24px;">Paper</a>
+**<a href="https://arxiv.org/abs/2403.04965" style="font-size:40px;">[Paper]</a>**
 
 As more manufacturers launch their XR devices, there is an increasing dissatisfaction with models that only generate 2D images. To address this, we introduced the StereoDiffusion method, which, unlike traditional inpainting pipelines, is remarkably straightforward and seamlessly integrates into the original Stable Diffusion model. Our method modifies the latent space to provide an end-to-end, lightweight capability for fast generating stereo image pairs, without the need for fine-tuning model weights or any post-processing of images. We utilize the original image and its disparity map to generate the right latent space from the left through Stereo Pixel Shift operations, complemented by Symmetric Pixel Shift Masking Denoise and Self-Attention Layers Modification methods to align the right-side image with the left-side image. Moreover, our proposed method maintains a high standard of image quality throughout the stereo generation process, achieving state-of-the-art scores in various quantitative evaluations.
 
