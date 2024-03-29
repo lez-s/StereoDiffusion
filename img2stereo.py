@@ -400,5 +400,4 @@ if __name__ == "__main__":
     args = parse_args()
     image  = load_512(args.img_path)
     out_image,image_pair = run_inv_sd(image,args)
-    torchvision.utils.save_image(image_pair, os.path.join('outputs',f'{args.img_path.split("/")[-1]}'), normalize=True)
-    # Image.fromarray(out_image).save(os.path.join('outputs',f'{name}.png'))
+    Image.fromarray(image_pair).save(os.path.join('outputs',f'{args.img_path.split("/")[-1]}'))
