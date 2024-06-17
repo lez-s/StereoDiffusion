@@ -41,10 +41,12 @@ This work relies on the [Stable Diffusion](https://github.com/Stability-AI/stabl
 
 # Citation
 ```
-@article{wang2024stereodiffusion,
-  title={StereoDiffusion: Training-Free Stereo Image Generation Using Latent Diffusion Models},
-  author={Wang, Lezhong and Frisvad, Jeppe Revall and Jensen, Mark Bo and Bigdeli, Siavash Arjomand},
-  journal={arXiv preprint arXiv:2403.04965},
-  year={2024}
+@InProceedings{Wang_2024_CVPR,
+    author    = {Wang, Lezhong and Frisvad, Jeppe Revall and Jensen, Mark Bo and Bigdeli, Siavash Arjomand},
+    title     = {StereoDiffusion: Training-Free Stereo Image Generation Using Latent Diffusion Models},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+    month     = {June},
+    year      = {2024},
+    pages     = {7416-7425}
 }
 ```
