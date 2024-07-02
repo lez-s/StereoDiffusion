@@ -26,7 +26,7 @@ We use original Stable Diffusion depth model and DPT depth model, so you need to
 
 - clone [stablediffusion](https://github.com/Stability-AI/stablediffusion)
 - run `pip install -r stablediffusion/requirements.txt` to install the required packages.
-- run `python depth2stereoimg.py --ckpt=models/512-depth-ema.ckpt --prompt="your prompt" --init_img="path/to/your/image"`
+- run `python depth2stereoimg.py --ckpt=models/512-depth-ema.ckpt --prompt="your prompt" --init_img="path/to/your/image" --depthmodel_path=midas_models/dpt_hybrid-midas-501f0c75.pt`
 
 ## 3. Existing image to Stereo image generation
 We use DPT depth model, so you need to download this model first. You can download the DPT depth model `dpt_hybrid-midas-501f0c75.pt` from [here](https://github.com/isl-org/DPT). Then, you need to put DPT depth model in `midas_models` folder.
