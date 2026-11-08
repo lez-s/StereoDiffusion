@@ -161,7 +161,7 @@ def regiter_attention_editor_diffusers(model, editor):
     cross_att_count = 0
     try:
         sub_nets = model.model.diffusion_model.named_children()
-    except: 
+    except AttributeError:
         sub_nets = model.unet.named_children()
     for net_name, net in sub_nets:
         if "down" in net_name or "input" in net_name:
@@ -227,7 +227,7 @@ def restore_attention(model):
     cross_att_count = 0
     try:
         sub_nets = model.model.diffusion_model.named_children()
-    except: 
+    except AttributeError:
         sub_nets = model.unet.named_children()
     for net_name, net in sub_nets:
         if "down" in net_name or "input" in net_name:
